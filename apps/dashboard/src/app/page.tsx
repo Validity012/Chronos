@@ -9,6 +9,8 @@ import { TransactionList } from "@/components/finance/transaction-list";
 import { AssignmentsWidget } from "@/components/lms/assignments-widget";
 import { GradesWidget } from "@/components/lms/grades-widget";
 import { CoursesWidget } from "@/components/lms/courses-widget";
+import { TaskSummaryWidget } from "@/components/tasks/task-summary-widget";
+import { TaskListWidget } from "@/components/tasks/task-list-widget";
 
 export default function DashboardPage() {
   return (
@@ -29,6 +31,8 @@ export default function DashboardPage() {
         </div>
         <div className="space-y-6">
           <SummaryCards />
+          <TaskSummaryWidget />
+          <TaskListWidget />
           <BudgetList />
           <InsightsPanel />
         </div>
@@ -36,4 +40,3 @@ export default function DashboardPage() {
     </DashboardShell>
   );
 }
-

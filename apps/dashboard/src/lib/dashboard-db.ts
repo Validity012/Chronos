@@ -6,7 +6,7 @@ const DB_PATH = path.join(process.cwd(), '../../data/dashboard.db');
 
 let _db: Database.Database | null = null;
 
-function getDb(): Database.Database {
+export function getDb(): Database.Database {
   if (!_db) {
     _db = new Database(DB_PATH);
     _db.pragma('journal_mode = WAL');
@@ -137,4 +137,30 @@ export function closeDb() {
     _db.close();
     _db = null;
   }
+}
+
+export interface SessionEntry {
+  id: string;
+  cookies: string;
+  token: string;
+  last_used: string;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export function getGoogleSession(): SessionEntry | null {
+  const entry = getDb().prepare(
+    `SELECT * FROM lms_session WHERE id = 'google-tasks' AND (expires_at IS NULL OR datetime(expires_at) > datetime('now')) LIMIT 1`
+  ).get() as SessionEntry | undefined;
+  return entry ?? null;
+}
+
+export function setGoogleSession(tokens: { expiry_date?: number; access_token?: string }) {
+  const expirySeconds = tokens.expiry_date
+    ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
+    : 3600;
+  getDb().prepare(`
+    INSERT OR REPLACE INTO lms_session (id, cookies, token, last_used, expires_at)
+    VALUES ('google-tasks', ?, ?, datetime('now'), datetime('now', '+' || ? || ' seconds'))
+  `).run('google-tasks', JSON.stringify(tokens), tokens.access_token || '', expirySeconds);
 }
