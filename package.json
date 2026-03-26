@@ -1,0 +1,25 @@
+{
+  "name": "chronos",
+  "version": "1.0.0",
+  "description": "Life OS Dashboard - Personal productivity and life management system",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "npm run dev --workspace=dashboard",
+    "build": "npm run build --workspace=dashboard",
+    "start": "npm run start --workspace=dashboard",
+    "finance-bot": "npm run start --workspace=finance-coach",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "keywords": ["dashboard", "productivity", "finance", "lms", "tasks"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
