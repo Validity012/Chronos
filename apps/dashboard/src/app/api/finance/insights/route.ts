@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 import { financeDb } from '@/lib/database';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     const body = await request.json();
     const { query } = body;
 
