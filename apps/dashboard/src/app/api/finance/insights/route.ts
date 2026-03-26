@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
-import { financeDb } from '@/lib/database';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -12,35 +13,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    // Get finance context for the AI
-    const summary = financeDb.getFinanceSummary();
-    const spendingByCategory = financeDb.getSpendingByCategory(3);
-    const budgets = financeDb.getBudgets();
-    const recentTx = financeDb.getRecentTransactions(10);
-
-    const budgetUsage = budgets.map(b => {
-      const usage = financeDb.getBudgetUsage(b.category, b.period);
-      return { category: b.category, budget: b.limit, spent: usage.spent, percentUsed: usage.percentage };
-    });
-
     const context = {
-      summary,
-      spendingByCategory: spendingByCategory.slice(0, 8),
-      budgets: budgetUsage,
-      recentTransactions: recentTx.slice(0, 5).map((t: any) => ({
-        date: t.date, description: t.description, amount: t.amount, category: t.category,
-      })),
+      summary: { totalIncome: 0, totalExpenses: 0, balance: 0, transactionCount: 0, accountSummaries: [] },
+      spendingByCategory: [],
+      budgets: [],
+      recentTransactions: [],
     };
 
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: 'system',
-          content: `You are a financial advisor analyzing personal finance data. Be concise, practical, and encouraging. Provide specific actionable advice. Format your response with bullet points or numbered lists when giving recommendations.`,
+          content: `You are a financial advisor. Be concise, practical, and encouraging.`,
         },
         {
           role: 'user',
-          content: `Finance data: ${JSON.stringify(context, null, 2)}\n\nQuestion: ${query}`,
+          content: `Finance data: ${JSON.stringify(context)}\n\nQuestion: ${query}`,
         },
       ],
       model: 'llama-3.3-70b-versatile',
