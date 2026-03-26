@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
 export interface GroqInsightRequest {
   query: string;
   context: 'finance' | 'tasks' | 'lms' | 'general';
@@ -55,7 +50,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Prepare user prompt with context data
     const userPrompt = formatUserPrompt(body.query, body.data, body.context);
 
-    // Call Groq API
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
     const completion = await groq.chat.completions.create({
       messages: [
         {
