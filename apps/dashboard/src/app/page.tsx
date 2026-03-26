@@ -11,10 +11,18 @@ import { GradesWidget } from "@/components/lms/grades-widget";
 import { CoursesWidget } from "@/components/lms/courses-widget";
 import { TaskSummaryWidget } from "@/components/tasks/task-summary-widget";
 import { TaskListWidget } from "@/components/tasks/task-list-widget";
+import { OverviewPanel } from "@/components/overview/overview-panel";
+import { QuickActions } from "@/components/overview/quick-actions";
 
 export default function DashboardPage() {
   return (
     <DashboardShell>
+      <div className="mb-6">
+        <OverviewPanel />
+      </div>
+      <div className="mb-6">
+        <QuickActions />
+      </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AssignmentsWidget />
