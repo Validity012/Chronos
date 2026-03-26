@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { getGoogleSession } from '@/lib/dashboard-db';
-import { getTaskCache, setTaskCache, getDb } from '@/lib/dashboard-db';
+import { getTaskCache, setTaskCache } from '@/lib/dashboard-db';
 import type { Task, TaskList } from '@/lib/google-tasks';
 
-function createTasksClient() {
-  const session = getGoogleSession();
+async function createTasksClient() {
+  const session = await getGoogleSession();
   if (!session) return null;
 
   const creds = JSON.parse(session.cookies);
@@ -20,12 +20,12 @@ function createTasksClient() {
 }
 
 export async function GET() {
-  const cached = getTaskCache('tasks');
+  const cached = await getTaskCache('tasks');
   if (cached) {
     return NextResponse.json(JSON.parse(cached.data));
   }
 
-  const tasksApi = createTasksClient();
+  const tasksApi = await createTasksClient();
   if (!tasksApi) {
     return NextResponse.json({ error: 'Not authenticated with Google', tasks: [], summary: {} }, { status: 401 });
   }
@@ -97,7 +97,7 @@ export async function GET() {
       taskLists,
     };
 
-    setTaskCache('tasks', JSON.stringify(result), 5);
+    await setTaskCache('tasks', JSON.stringify(result), 5);
     return NextResponse.json(result);
   } catch (err) {
     console.error('Tasks API error:', err);
@@ -106,7 +106,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const tasksApi = createTasksClient();
+  const tasksApi = await createTasksClient();
   if (!tasksApi) {
     return NextResponse.json({ error: 'Not authenticated with Google' }, { status: 401 });
   }
@@ -125,7 +125,6 @@ export async function POST(request: NextRequest) {
         task: taskId,
         requestBody: { status },
       });
-      getDb().prepare(`DELETE FROM task_cache WHERE type = 'tasks'`).run();
       return NextResponse.json({ success: true });
     }
 
@@ -142,7 +141,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    getDb().prepare(`DELETE FROM task_cache WHERE type = 'tasks'`).run();
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Tasks POST error:', err);

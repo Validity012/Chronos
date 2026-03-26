@@ -1,22 +1,23 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createClient } from '@libsql/client';
 
-// Path to dashboard database
-const DB_PATH = path.join(process.cwd(), '../../data/dashboard.db');
+const dbUrl = process.env.DATABASE_URL ?? 'file:../data/dashboard.db';
+const authToken = process.env.TURSO_AUTH_TOKEN;
 
-let _db: Database.Database | null = null;
+let _client: ReturnType<typeof createClient> | null = null;
 
-export function getDb(): Database.Database {
-  if (!_db) {
-    _db = new Database(DB_PATH);
-    _db.pragma('journal_mode = WAL');
-    initSchema(_db);
+function getDb() {
+  if (!_client) {
+    const url = authToken && dbUrl.includes('turso.io')
+      ? `${dbUrl}?authToken=${authToken}`
+      : dbUrl;
+    _client = createClient({ url });
   }
-  return _db;
+  return _client;
 }
 
-function initSchema(db: Database.Database) {
-  db.exec(`
+async function initSchema() {
+  const db = getDb();
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS user_preferences (
       id TEXT PRIMARY KEY DEFAULT 'default',
       theme TEXT NOT NULL DEFAULT 'system',
@@ -24,8 +25,9 @@ function initSchema(db: Database.Database) {
       dashboard_order TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
+    )
+  `);
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS lms_cache (
       id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
       type TEXT NOT NULL,
@@ -33,8 +35,9 @@ function initSchema(db: Database.Database) {
       fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT NOT NULL,
       CHECK (type IN ('assignments', 'grades', 'courses', 'lms'))
-    );
-
+    )
+  `);
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS task_cache (
       id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
       type TEXT NOT NULL,
@@ -42,8 +45,9 @@ function initSchema(db: Database.Database) {
       fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT NOT NULL,
       CHECK (type IN ('tasks', 'calendar'))
-    );
-
+    )
+  `);
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS lms_session (
       id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
       cookies TEXT NOT NULL,
@@ -51,14 +55,17 @@ function initSchema(db: Database.Database) {
       last_used TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_lms_cache_type ON lms_cache(type);
-    CREATE INDEX IF NOT EXISTS idx_task_cache_type ON task_cache(type);
+    )
   `);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_lms_cache_type ON lms_cache(type)`);
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_task_cache_type ON task_cache(type)`);
+  await db.execute(`INSERT OR IGNORE INTO user_preferences (id) VALUES ('default')`);
+}
 
-  // Ensure default preferences exist
-  db.prepare(`INSERT OR IGNORE INTO user_preferences (id) VALUES ('default')`).run();
+type Row = Record<string, unknown>;
+
+function rowToObj<T>(row: Row): T {
+  return row as T;
 }
 
 export interface UserPreferences {
@@ -70,24 +77,31 @@ export interface UserPreferences {
   updated_at: string;
 }
 
-// User Preferences
-export function getUserPreferences(): UserPreferences {
-  return getDb().prepare('SELECT * FROM user_preferences WHERE id = ?').get('default') as UserPreferences;
+export async function getUserPreferences(): Promise<UserPreferences> {
+  const db = getDb();
+  const result = await db.execute({
+    sql: 'SELECT * FROM user_preferences WHERE id = ?',
+    args: ['default'],
+  });
+  return rowToObj<UserPreferences>((result.rows[0] ?? {}) as Row);
 }
 
-export function updateTheme(theme: string) {
-  getDb().prepare(`
-    UPDATE user_preferences SET theme = ?, updated_at = datetime('now') WHERE id = 'default'
-  `).run(theme);
+export async function updateTheme(theme: string) {
+  const db = getDb();
+  await db.execute({
+    sql: "UPDATE user_preferences SET theme = ?, updated_at = datetime('now') WHERE id = 'default'",
+    args: [theme],
+  });
 }
 
-export function updateSidebarCollapsed(collapsed: boolean) {
-  getDb().prepare(`
-    UPDATE user_preferences SET sidebar_collapsed = ?, updated_at = datetime('now') WHERE id = 'default'
-  `).run(collapsed ? 1 : 0);
+export async function updateSidebarCollapsed(collapsed: boolean) {
+  const db = getDb();
+  await db.execute({
+    sql: "UPDATE user_preferences SET sidebar_collapsed = ?, updated_at = datetime('now') WHERE id = 'default'",
+    args: [collapsed ? 1 : 0],
+  });
 }
 
-// LMS Cache
 export interface CacheEntry {
   id: string;
   type: string;
@@ -96,47 +110,42 @@ export interface CacheEntry {
   expires_at: string;
 }
 
-export function getLmsCache(type: string): CacheEntry | null {
-  const entry = getDb().prepare(`
-    SELECT * FROM lms_cache 
-    WHERE type = ? AND datetime(expires_at) > datetime('now')
-    ORDER BY fetched_at DESC LIMIT 1
-  `).get(type) as CacheEntry | undefined;
-  return entry ?? null;
-}
-
-export function setLmsCache(type: string, data: string, ttlMinutes: number) {
+export async function getLmsCache(type: string): Promise<CacheEntry | null> {
   const db = getDb();
-  // Upsert: delete old, insert new
-  db.prepare('DELETE FROM lms_cache WHERE type = ?').run(type);
-  db.prepare(`
-    INSERT INTO lms_cache (type, data, expires_at) VALUES (?, ?, datetime('now', '+' || ? || ' minutes'))
-  `).run(type, data, ttlMinutes);
+  const result = await db.execute({
+    sql: `SELECT * FROM lms_cache WHERE type = ? AND datetime(expires_at) > datetime('now') ORDER BY fetched_at DESC LIMIT 1`,
+    args: [type],
+  });
+  if (result.rows.length === 0) return null;
+  return rowToObj<CacheEntry>((result.rows[0]) as Row);
 }
 
-// Task Cache
-export function getTaskCache(type: string): CacheEntry | null {
-  const entry = getDb().prepare(`
-    SELECT * FROM task_cache 
-    WHERE type = ? AND datetime(expires_at) > datetime('now')
-    ORDER BY fetched_at DESC LIMIT 1
-  `).get(type) as CacheEntry | undefined;
-  return entry ?? null;
-}
-
-export function setTaskCache(type: string, data: string, ttlMinutes: number) {
+export async function setLmsCache(type: string, data: string, ttlMinutes: number) {
   const db = getDb();
-  db.prepare('DELETE FROM task_cache WHERE type = ?').run(type);
-  db.prepare(`
-    INSERT INTO task_cache (type, data, expires_at) VALUES (?, ?, datetime('now', '+' || ? || ' minutes'))
-  `).run(type, data, ttlMinutes);
+  await db.execute({ sql: 'DELETE FROM lms_cache WHERE type = ?', args: [type] });
+  await db.execute({
+    sql: `INSERT INTO lms_cache (type, data, expires_at) VALUES (?, ?, datetime('now', '+' || ? || ' minutes'))`,
+    args: [type, data, ttlMinutes],
+  });
 }
 
-export function closeDb() {
-  if (_db) {
-    _db.close();
-    _db = null;
-  }
+export async function getTaskCache(type: string): Promise<CacheEntry | null> {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT * FROM task_cache WHERE type = ? AND datetime(expires_at) > datetime('now') ORDER BY fetched_at DESC LIMIT 1`,
+    args: [type],
+  });
+  if (result.rows.length === 0) return null;
+  return rowToObj<CacheEntry>((result.rows[0]) as Row);
+}
+
+export async function setTaskCache(type: string, data: string, ttlMinutes: number) {
+  const db = getDb();
+  await db.execute({ sql: 'DELETE FROM task_cache WHERE type = ?', args: [type] });
+  await db.execute({
+    sql: `INSERT INTO task_cache (type, data, expires_at) VALUES (?, ?, datetime('now', '+' || ? || ' minutes'))`,
+    args: [type, data, ttlMinutes],
+  });
 }
 
 export interface SessionEntry {
@@ -148,19 +157,25 @@ export interface SessionEntry {
   created_at: string;
 }
 
-export function getGoogleSession(): SessionEntry | null {
-  const entry = getDb().prepare(
-    `SELECT * FROM lms_session WHERE id = 'google-tasks' AND (expires_at IS NULL OR datetime(expires_at) > datetime('now')) LIMIT 1`
-  ).get() as SessionEntry | undefined;
-  return entry ?? null;
+export async function getGoogleSession(): Promise<SessionEntry | null> {
+  const db = getDb();
+  const result = await db.execute({
+    sql: `SELECT * FROM lms_session WHERE id = 'google-tasks' AND (expires_at IS NULL OR datetime(expires_at) > datetime('now')) LIMIT 1`,
+    args: [],
+  });
+  if (result.rows.length === 0) return null;
+  return rowToObj<SessionEntry>((result.rows[0]) as Row);
 }
 
-export function setGoogleSession(tokens: { expiry_date?: number; access_token?: string }) {
+export async function setGoogleSession(tokens: { expiry_date?: number | null; access_token?: string | null }) {
+  const db = getDb();
   const expirySeconds = tokens.expiry_date
     ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
     : 3600;
-  getDb().prepare(`
-    INSERT OR REPLACE INTO lms_session (id, cookies, token, last_used, expires_at)
-    VALUES ('google-tasks', ?, ?, datetime('now'), datetime('now', '+' || ? || ' seconds'))
-  `).run('google-tasks', JSON.stringify(tokens), tokens.access_token || '', expirySeconds);
+  await db.execute({
+    sql: `INSERT OR REPLACE INTO lms_session (id, cookies, token, last_used, expires_at) VALUES ('google-tasks', ?, ?, datetime('now'), datetime('now', '+' || ? || ' seconds'))`,
+    args: ['google-tasks', JSON.stringify(tokens), tokens.access_token || '', expirySeconds],
+  });
 }
+
+initSchema().catch(console.error);

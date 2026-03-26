@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
-import { getDb } from '@/lib/dashboard-db';
+import { setGoogleSession } from '@/lib/dashboard-db';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -22,16 +22,7 @@ export async function GET(request: NextRequest) {
       );
 
       const { tokens } = await oauth2Client.getToken(code);
-
-      const expirySeconds = tokens.expiry_date
-        ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
-        : 3600;
-
-      const db = getDb();
-      db.prepare(`
-        INSERT OR REPLACE INTO lms_session (id, cookies, token, last_used, expires_at)
-        VALUES ('google-tasks', ?, ?, datetime('now'), datetime('now', '+' || ? || ' seconds'))
-      `).run('google-tasks', JSON.stringify(tokens), tokens.access_token || '', expirySeconds);
+      await setGoogleSession({ expiry_date: tokens.expiry_date ?? undefined, access_token: tokens.access_token ?? undefined });
 
       return NextResponse.redirect(new URL('/?success=google_connected', request.url));
     } catch (err) {

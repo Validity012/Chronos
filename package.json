@@ -15,11 +15,20 @@
   "workspaces": [
     "apps/*"
   ],
-  "keywords": ["dashboard", "productivity", "finance", "lms", "tasks"],
+  "keywords": [
+    "dashboard",
+    "productivity",
+    "finance",
+    "lms",
+    "tasks"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.2"
   }
 }
