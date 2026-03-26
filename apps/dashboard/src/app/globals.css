@@ -128,3 +128,24 @@
     @apply font-sans;
   }
 }
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+* {
+  transition-property: background-color, border-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
