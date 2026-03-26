@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 
 interface Budget {
-  id: string;
-  name: string;
-  amount: number;
+  category: string;
+  limit: number;
   spent: number;
+  percentage: number;
 }
 
 export function BudgetList() {
@@ -18,7 +18,7 @@ export function BudgetList() {
     fetch('/api/finance/summary')
       .then(res => res.json())
       .then(data => {
-        setBudgets(data.budgets)
+        setBudgets(data.budgetUsage ?? [])
         setLoading(false)
       })
   }, [])
@@ -60,14 +60,14 @@ export function BudgetList() {
         <CardTitle>Budgets</CardTitle>
       </CardHeader>
       <CardContent>
-        {budgets.map(budget => {
-          const percentage = (budget.spent / budget.amount) * 100
+        {budgets.map((budget, i) => {
+          const percentage = Math.min(budget.percentage, 100)
           return (
-            <div key={budget.id} className="mb-4">
+            <div key={i} className="mb-4">
               <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">{budget.name}</span>
+                <span className="text-sm font-medium">{budget.category}</span>
                 <span className="text-sm text-muted-foreground">
-                  {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                  {formatCurrency(budget.spent)} / {formatCurrency(budget.limit)}
                 </span>
               </div>
               <div className="w-full bg-muted rounded-full h-2.5">
@@ -79,6 +79,9 @@ export function BudgetList() {
             </div>
           )
         })}
+        {budgets.length === 0 && (
+          <div className="text-center text-muted-foreground">No budgets set.</div>
+        )}
       </CardContent>
     </Card>
   )

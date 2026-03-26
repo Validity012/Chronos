@@ -20,7 +20,7 @@ export function TransactionList() {
     fetch('/api/finance/summary')
       .then(res => res.json())
       .then(data => {
-        setTransactions(data.transactions)
+        setTransactions(data.recentTransactions ?? [])
         setLoading(false)
       })
   }, [])

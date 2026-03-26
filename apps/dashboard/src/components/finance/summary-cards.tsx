@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 interface Summary {
   totalIncome: number;
   totalExpenses: number;
-  netBalance: number;
+  balance: number;
   transactionCount: number;
 }
 
@@ -72,8 +72,8 @@ export function SummaryCards() {
           <Wallet className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${summary?.netBalance ?? 0 >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {formatCurrency(summary?.netBalance ?? 0)}
+          <div className={`text-2xl font-bold ${summary?.balance ?? 0 >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatCurrency(summary?.balance ?? 0)}
           </div>
         </CardContent>
       </Card>
