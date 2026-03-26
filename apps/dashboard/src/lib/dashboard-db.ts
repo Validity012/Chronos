@@ -32,7 +32,7 @@ function initSchema(db: Database.Database) {
       data TEXT NOT NULL,
       fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT NOT NULL,
-      CHECK (type IN ('assignments', 'grades', 'courses'))
+      CHECK (type IN ('assignments', 'grades', 'courses', 'lms'))
     );
 
     CREATE TABLE IF NOT EXISTS task_cache (
