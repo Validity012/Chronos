@@ -205,55 +205,54 @@ Browser → POST /api/insights → Groq Llama 3.3 70B (server-side) → response
 - [x] README updated
 - [x] Credentials saved to `.env`
 
-### Phase 2 — Dashboard Shell + Finance
-- [ ] Install deps: `playwright`, `googleapis`, `prisma`, `shadcn/ui`
-- [ ] Set up Prisma schema (preferences, cache tables)
-- [ ] Dashboard layout: sidebar, header, widget grid
-- [ ] Finance widget: read from `finance.db`, summary cards
-- [ ] Budget status cards (progress bars)
-- [ ] Recent transactions list
-- [ ] Groq AI insights panel
-- [ ] Dark/light mode toggle
-- [ ] Settings page (credentials config)
+### Phase 2 — Dashboard Shell + Finance ✅
+- [x] Set up Prisma schema (preferences, cache tables)
+- [x] Dashboard layout: sidebar, header, widget grid
+- [x] Finance widget: read from `finance.db`, summary cards
+- [x] Budget status cards (progress bars)
+- [x] Recent transactions list
+- [x] Groq AI insights panel
+- [x] Dark/light mode toggle
+- [x] Settings page (credentials config)
 
-### Phase 3 — LMS Integration
-- [ ] Install Playwright + Chromium
-- [ ] Moodle login with CSRF (`logintoken`)
-- [ ] Assignments scraper (due date, course, status, link)
-- [ ] Grades scraper (course, score, max, date)
-- [ ] Courses scraper (name, materials link)
-- [ ] Assignment cards with deep links to LMS
-- [ ] Grade display with color coding
-- [ ] LMS widget on dashboard
-- [ ] Error handling + "refresh" button
+### Phase 3 — LMS Integration ✅
+- [x] Install Playwright + Chromium
+- [x] Moodle login with CSRF (`logintoken`)
+- [x] Assignments scraper (due date, course, status, link)
+- [x] Grades scraper (course, score, max, date)
+- [x] Courses scraper (name, materials link)
+- [x] Assignment cards with deep links to LMS
+- [x] Grade display with color coding
+- [x] LMS widget on dashboard
+- [x] Error handling + "refresh" button
 
-### Phase 4 — Tasks + Calendar + UI/UX
-- [ ] Google Cloud project — enable Tasks + Calendar APIs
-- [ ] OAuth2 flow (auth URL → callback → token storage)
-- [ ] Task list display with due dates
-- [ ] Create task form (title, due date, notes)
-- [ ] Task completion toggle (mark done → archive)
-- [ ] Calendar event creation with reminders (30min, 1hr, 1day)
-- [ ] `createTaskReminder()` convenience method
-- [ ] Tasks + Calendar widgets on dashboard
-- [ ] **UI/UX polish**: animations, transitions, empty states
-- [ ] **shadcn/ui components**: cards, dialogs, forms, tables
-- [ ] Responsive sidebar (collapsible)
-- [ ] Loading skeletons
+### Phase 4 — Tasks + Calendar + UI/UX ✅
+- [x] Google Cloud project — enable Tasks + Calendar APIs
+- [x] OAuth2 flow (auth URL → callback → token storage)
+- [x] Task list display with due dates
+- [x] Create task form (title, due date, notes)
+- [x] Task completion toggle (mark done → archive)
+- [x] Calendar event creation with reminders (30min, 1hr, 1day)
+- [x] `createTaskReminder()` convenience method
+- [x] Tasks + Calendar widgets on dashboard
+- [x] **UI/UX polish**: animations, transitions, empty states
+- [x] **shadcn/ui components**: cards, dialogs, forms, tables
+- [x] Responsive sidebar (collapsible)
+- [x] Loading skeletons
 
-### Phase 5 — Overview + AI Coach
-- [ ] Overview panel: week summary, next 3 deadlines
-- [ ] Groq AI chat panel (inline, not modal)
-- [ ] Quick actions: "log expense", "add task", "check grades"
-- [ ] Performance: caching, lazy loading, optimistic updates
-- [ ] Error boundaries + toast notifications
+### Phase 5 — Overview + AI Coach ✅
+- [x] Overview panel: week summary, next 3 deadlines
+- [x] Groq AI chat panel (inline, not modal)
+- [x] Quick actions: "log expense", "add task", "check grades"
+- [x] Performance: caching, lazy loading, optimistic updates
+- [x] Error boundaries + toast notifications
 
-### Phase 6 — Mobile + PWA
-- [ ] Responsive layout (breakpoints at sm/md)
-- [ ] PWA manifest + service worker
-- [ ] Offline-first (cache finance + tasks data)
-- [ ] Push notifications (via service worker)
-- [ ] Bottom nav bar on mobile
+### Phase 6 — Mobile + PWA ✅
+- [x] Responsive layout (breakpoints at sm/md)
+- [x] PWA manifest + service worker
+- [x] Offline-first (cache finance + tasks data)
+- [ ] Push notifications (via service worker) — future iteration
+- [x] Bottom nav bar on mobile
 
 ---
 

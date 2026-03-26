@@ -1,5 +1,6 @@
 "use client"
 
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { SummaryCards } from "@/components/finance/summary-cards";
 import { SpendingChart } from "@/components/finance/spending-chart";
@@ -17,34 +18,37 @@ import { QuickActions } from "@/components/overview/quick-actions";
 export default function DashboardPage() {
   return (
     <DashboardShell>
-      <div className="mb-6">
-        <OverviewPanel />
-      </div>
-      <div className="mb-6">
-        <QuickActions />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <AssignmentsWidget />
+      <main className="pb-20">
+        <div className="mb-6">
+          <OverviewPanel />
         </div>
-        <div className="space-y-6">
-          <GradesWidget />
-          <CoursesWidget />
+        <div className="mb-6">
+          <QuickActions />
         </div>
-      </div>
-      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="lg:col-span-2 grid gap-6">
-          <SpendingChart />
-          <TransactionList />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <AssignmentsWidget />
+          </div>
+          <div className="space-y-6">
+            <GradesWidget />
+            <CoursesWidget />
+          </div>
         </div>
-        <div className="space-y-6">
-          <SummaryCards />
-          <TaskSummaryWidget />
-          <TaskListWidget />
-          <BudgetList />
-          <InsightsPanel />
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="lg:col-span-2 grid gap-6">
+            <SpendingChart />
+            <TransactionList />
+          </div>
+          <div className="space-y-6">
+            <SummaryCards />
+            <TaskSummaryWidget />
+            <TaskListWidget />
+            <BudgetList />
+            <InsightsPanel />
+          </div>
         </div>
-      </div>
+      </main>
+      <BottomNav />
     </DashboardShell>
   );
 }
